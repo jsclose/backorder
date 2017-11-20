@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ##Problem Context:
 
-Backordering boils down to having orders that a company cannot fulfill or more oders than you have on stock. For most businesses, having this many sales is fantastic, but can be a huge problem if its not handled properly. If a company is consistently running on backorder, it could a sign of poor inventory management and the company could be losing out on business by not providing the products customers want. If a company can identify products or parts at risk of going to back order before the event occurs, they can properly react.
+Backordering boils down to having orders that a company cannot fulfill or more orders than you have on stock. For most businesses, having this many sales is fantastic, but can be a huge problem if its not handled properly. If a company is consistently running on backorder, it could a sign of poor inventory management and the company could be losing out on business by not providing the products customers want. If a company can identify products or parts at risk of going to back order before the event occurs, they can properly react.
 
 
 
@@ -28,6 +28,7 @@ library(class)
 library(gmodels)
 library(ggplot2)
 library(dplyr)
+library(C50)
 orders_test<- read.csv("Kaggle_Test_Dataset_v2.csv")
 orders_train <- read.csv("Kaggle_Training_Dataset_v2.csv")
 ```
@@ -44,18 +45,35 @@ str(orders_train)
 ```{r}
 summary(orders_train)
 ```
-There is an issue when reading in the last row, lets remove it
+There is an issue when reading in the last row, lets remove it. Lets also clean the data of NAs
+
 
 ```{r}
 orders_train = orders_train[1687861,]
-summary(orders_train)
+
+colSums(is.na(orders_train))
+
 ```
 
-
-
-Lets observe the distribution of our predictor variable:
+Looks like we have some NA values for lead time. And a singular row of NA for some other factors. Lets set the lead time factor to the average and remove the rows with the NAs for the other factors.
 ```{r}
+orders_train$lead_time[is.na(orders_train$lead_time)] <- median(orders_train$lead_time,na.rm=T)
+orders_train <- orders_train[!row.has.na,]
+orders_train <- na.omit(orders_train)
+colSums(is.na(orders_train))
+```
+
+Much better. Next, lets observe the distribution of our predictor variable:
+```{r}
+
 round(prop.table(table(orders_train$went_on_backorder)) * 100, 1)
 
 ```
 We see that the majority of the products do not go on backorder. This means that we must have a very fined tune algorithm to to detect these small variances.
+
+Lets use a decision tree to train a model.
+```{r}
+backorder_model <- C5.0(orders_train[,-23], orders_train$went_on_backorder)
+
+```
+
