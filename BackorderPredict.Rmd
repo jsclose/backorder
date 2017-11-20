@@ -1,0 +1,61 @@
+---
+title: "Prediction of Backorders"
+author: "Jake Close"
+date: "11/16/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Problem Context:
+
+Backordering boils down to having orders that a company cannot fulfill or more oders than you have on stock. For most businesses, having this many sales is fantastic, but can be a huge problem if its not handled properly. If a company is consistently running on backorder, it could a sign of poor inventory management and the company could be losing out on business by not providing the products customers want. If a company can identify products or parts at risk of going to back order before the event occurs, they can properly react.
+
+
+
+##Data:
+Data is provided from Kaggle.com (https://www.kaggle.com/tiredgeek/predict-bo-trial)
+Training data file contains the historical data for the 8 weeks prior to the week we are trying to predict. The data was taken as weekly snapshots at the start of each week.
+
+
+###Importing Data and Libraries
+```{r}
+library(dummies)
+library(class)
+library(gmodels)
+library(ggplot2)
+library(dplyr)
+orders_test<- read.csv("Kaggle_Test_Dataset_v2.csv")
+orders_train <- read.csv("Kaggle_Training_Dataset_v2.csv")
+```
+
+
+
+##Data Cleaning
+
+Lets analyze the structure of our data. We find there are 1,687,861 observations and 23 variables. Our predictor variable is "went_on_backorder". At first glance, there are are mixture of factors, integer and numerical columns. Also, some variables have NA's which we must take into account, and many variables appear to be sparse.
+```{r}
+str(orders_train)
+```
+
+```{r}
+summary(orders_train)
+```
+There is an issue when reading in the last row, lets remove it
+
+```{r}
+orders_train = orders_train[1687861,]
+summary(orders_train)
+```
+
+
+
+Lets observe the distribution of our predictor variable:
+```{r}
+round(prop.table(table(orders_train$went_on_backorder)) * 100, 1)
+
+```
+We see that the majority of the products do not go on backorder. This means that we must have a very fined tune algorithm to to detect these small variances.
